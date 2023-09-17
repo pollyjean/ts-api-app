@@ -31,15 +31,14 @@ abstract class LocalStorageElement<V> {
     return "";
   }
   setItem(_key: string, _value: V) {
-    // const key = this.key !== "" ? this.key : _key;
-    // const value = this.value ? this.value : _value;
     this.key = _key;
     this.value = _value;
 
     const checkedKey = this.checkRequiredKey(_key);
-    if (checkedKey === "") return "";
+    if (checkedKey === "") return false;
     const valueJSONstring = { _value };
     localStorage.setItem(_key + "", JSON.stringify(valueJSONstring));
+    return true;
   }
 }
 
@@ -91,7 +90,6 @@ console.log("result : ", numApi.getItem("one"));
 const stringApi = new LocalStorageApi<string>("alpha", "a");
 console.log("get 잘못된 값 삭제 테스트 result : ", stringApi.getItem("a"));
 console.log("result : ", stringApi.getItem("alpha"));
-console.log("End Line of LocalApi");
 const boolApi = new LocalStorageApi();
 boolApi.setItem("Truth", true);
 console.log("result : ", boolApi.getItem("Truth"));
@@ -124,3 +122,87 @@ console.log("End Line of LocalApi");
 // geolocation.clearWatch(id);
 // Documentation: https://developer.mozilla.org/en-US/docs/Web/API/Geolocation
 // * https://huchu.link/ 이동하여 URL 을 단축하세요.
+
+interface CurrentOptions {
+  maximumAge?: number;
+  timeout?: number;
+  enableHighAccuracy?: boolean;
+}
+interface CurrentSuccessCallback {
+  (position: GeolocationPosition): void;
+}
+interface CurrentErrorCallback {
+  (error: GeolocationPositionError): void;
+}
+
+class GeoCurrentApi {
+  getCurrentPosition(successFn: CurrentSuccessCallback): void;
+  getCurrentPosition(successFn: CurrentSuccessCallback, errorFn: CurrentErrorCallback): void;
+  getCurrentPosition(successFn: CurrentSuccessCallback, errorFn?: CurrentErrorCallback, options?: CurrentOptions): void;
+  getCurrentPosition(
+    successFn: CurrentSuccessCallback,
+    errorFn?: CurrentErrorCallback,
+    options?: CurrentOptions
+  ): void {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(successFn, errorFn, options);
+    } else {
+      console.error("Geolocation Not Support");
+    }
+  }
+}
+
+const currApi = new GeoCurrentApi();
+currApi.getCurrentPosition(
+  (position) => {
+    console.log("Current Lat : ", position.coords.latitude);
+    console.log("Current Lon : ", position.coords.longitude);
+    const timeInfo = new Date(position.timestamp);
+    console.log("--Watch timeInfo-- : ", timeInfo);
+  },
+  (error) => {
+    console.error(error);
+  },
+  {
+    enableHighAccuracy: true,
+  }
+);
+
+interface WatchOptions extends CurrentOptions {
+  frequency: number;
+}
+interface WatchSuccessCallback {
+  (position: GeolocationPosition): void;
+}
+interface WatchErrorCallback {
+  (error: GeolocationPositionError): void;
+}
+
+class GeoWatchApi {
+  watchPosition(successFn: WatchSuccessCallback): void;
+  watchPosition(successFn: WatchSuccessCallback, errorFn: WatchErrorCallback): void;
+  watchPosition(successFn: WatchSuccessCallback, errorFn?: WatchErrorCallback, options?: WatchOptions): void;
+  watchPosition(successFn: WatchSuccessCallback, errorFn?: WatchErrorCallback, options?: WatchOptions): void {
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(successFn, errorFn, options);
+    } else {
+      console.error("Geolocation Not Support");
+    }
+  }
+}
+
+const geoApi = new GeoWatchApi();
+geoApi.watchPosition(
+  (position) => {
+    console.log("Watch Lat : ", position.coords.latitude);
+    console.log("Watch Lon : ", position.coords.longitude);
+    const timeInfo = new Date(position.timestamp);
+    console.log("--Watch timeInfo-- : ", timeInfo);
+  },
+  (error) => {
+    console.error(error);
+  },
+  {
+    frequency: 60000,
+  }
+);
